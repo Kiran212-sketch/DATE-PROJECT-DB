@@ -1,13 +1,3 @@
-name: Farmer Frontend CI/CD
-
-on:
-  push:
-    branches:
-      - farmer-frontend
-  pull_request:
-    branches:
-      - farmer-frontend
-
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -19,38 +9,16 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v3
       with:
-        node-version: '18'  # or your frontend node version
+        node-version: '18'
 
     - name: Install dependencies
+      working-directory: Frontend/farmer
       run: npm install
 
     - name: Run tests
+      working-directory: Frontend/farmer
       run: npm test
-      # If you don't have tests, you can remove this step or add your test commands
 
     - name: Build frontend
+      working-directory: Frontend/farmer
       run: npm run build
-      # Change this to your build command if different
-
-  deploy:
-    needs: build-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/farmer-frontend'
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    # For example, deploy to your server via SSH:
-    - name: Deploy to server via SSH
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        script: |
-          cd /path/to/deploy/directory
-          git pull origin farmer-frontend
-          # or any custom deployment commands like restarting server, copying files, etc.
-
-    # Or deploy to cloud or other platforms here (adjust accordingly)
