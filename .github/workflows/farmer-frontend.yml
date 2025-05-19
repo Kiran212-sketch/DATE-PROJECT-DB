@@ -1,43 +1,39 @@
+
+    
 name: Farmer Frontend CI/CD
 
 on:
   push:
     branches:
       - farmer-frontend
-    paths:
-      - 'Frontend/farmer/**'
 
 jobs:
-  build-deploy:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository with submodules
+      - name: ⬇️ Checkout code
         uses: actions/checkout@v3
-        with:
-          submodules: recursive
 
-      - name: Set up Node.js
+      - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # or your app's required version
+          node-version: '18'
 
-      - name: Install dependencies
-        working-directory: Frontend/farmer
+      - name: 📦 Install dependencies
         run: npm install
-
-      - name: Build app
         working-directory: Frontend/farmer
-        run: npm run build
 
-      - name: Deploy to server via SSH
-        if: github.ref == 'refs/heads/farmer-frontend'
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
-        run: |
-          echo "$SSH_PRIVATE_KEY" > private_key
-          chmod 600 private_key
-          rsync -avz -e "ssh -i private_key -o StrictHostKeyChecking=no" Frontend/farmer/build/ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
+      - name: 🛠️ Build React app
+        run: npm run build
+        working-directory: Frontend/farmer
+
+      - name: 🚀 Deploy via SCP to VM
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.FRONTEND_SERVER_IP }}
+          username: ${{ secrets.FRONTEND_SERVER_USER }}
+          key: ${{ secrets.FRONTEND_SERVER_SSH_KEY }}
+          source: "Frontend/farmer/build/*"
+          target: "/var/www/html/"
+
